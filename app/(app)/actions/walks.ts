@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import type { TablesUpdate } from "@/lib/database.types";
 import { walkSchema } from "@/lib/validation/walk";
-import { isAvailableAt } from "@/lib/walks/matching";
+import { canWalkerServeWalk } from "@/lib/walks/matching";
 import { estimatePrice } from "@/lib/walks/price";
 import { nextStatus, type WalkAction, type WalkStatus } from "@/lib/walks/statusMachine";
 
@@ -46,16 +46,33 @@ export async function createWalkRequest(fd: FormData) {
   if (parsed.data.walkerId) {
     const { data: walker } = await sb
       .from("walker_profiles")
-      .select("base_price")
+      .select("base_price, service_region, active, accepted_sizes, availability(weekday,start_time,end_time)")
       .eq("id", parsed.data.walkerId)
       .single();
-    if (walker) {
-      price = estimatePrice({
-        basePrice: Number(walker.base_price),
-        durationMin: parsed.data.durationMin,
-        size: pet.size,
-      });
+    if (
+      !walker ||
+      !canWalkerServeWalk(
+        {
+          active: walker.active,
+          service_region: walker.service_region,
+          accepted_sizes: walker.accepted_sizes,
+          availability: walker.availability ?? [],
+        },
+        {
+          region: parsed.data.region,
+          weekday: weekdayFromDate(parsed.data.date),
+          startTime: parsed.data.startTime,
+          petSize: pet.size,
+        },
+      )
+    ) {
+      return { error: "Passeador incompatível com região, horário ou porte do pet" };
     }
+    price = estimatePrice({
+      basePrice: Number(walker.base_price),
+      durationMin: parsed.data.durationMin,
+      size: pet.size,
+    });
   }
 
   const { data, error } = await sb
@@ -95,10 +112,21 @@ async function ensureWalkerCanHandle(actorId: string, walk: {
     .eq("id", actorId)
     .single();
 
-  if (!walker?.active) return false;
-  if ((walker.service_region ?? "").toLowerCase() !== walk.region.toLowerCase()) return false;
-  if (walk.pet && !walker.accepted_sizes.includes(walk.pet.size)) return false;
-  return isAvailableAt(walker.availability ?? [], weekdayFromDate(walk.scheduled_date), walk.start_time);
+  if (!walker || !walk.pet) return false;
+  return canWalkerServeWalk(
+    {
+      active: walker.active,
+      service_region: walker.service_region,
+      accepted_sizes: walker.accepted_sizes,
+      availability: walker.availability ?? [],
+    },
+    {
+      region: walk.region,
+      weekday: weekdayFromDate(walk.scheduled_date),
+      startTime: walk.start_time,
+      petSize: walk.pet.size,
+    },
+  );
 }
 
 async function transition(id: string, action: WalkAction, actorId: string, extra?: { reason?: string }) {
@@ -204,19 +232,40 @@ export async function chooseWalker(id: string, walkerId: string) {
   const sb = await createServerClient();
   const { data: walk } = await sb
     .from("walk_requests")
-    .select("id, pet:pets(size), duration_min")
+    .select("id, region, scheduled_date, start_time, pet:pets(size), duration_min")
     .eq("id", id)
     .eq("tutor_id", user.id)
     .eq("status", "solicitado")
     .single();
   if (!walk) return { error: "Solicitação não encontrada" };
 
-  const { data: walker } = await sb.from("walker_profiles").select("base_price").eq("id", walkerId).single();
+  const { data: walker } = await sb
+    .from("walker_profiles")
+    .select("base_price, service_region, active, accepted_sizes, availability(weekday,start_time,end_time)")
+    .eq("id", walkerId)
+    .single();
   const pet = Array.isArray(walk.pet) ? walk.pet[0] : walk.pet;
-  const price =
-    walker && pet
-      ? estimatePrice({ basePrice: Number(walker.base_price), durationMin: walk.duration_min, size: pet.size })
-      : 0;
+  if (
+    !walker ||
+    !pet ||
+    !canWalkerServeWalk(
+      {
+        active: walker.active,
+        service_region: walker.service_region,
+        accepted_sizes: walker.accepted_sizes,
+        availability: walker.availability ?? [],
+      },
+      {
+        region: walk.region,
+        weekday: weekdayFromDate(walk.scheduled_date),
+        startTime: walk.start_time,
+        petSize: pet.size,
+      },
+    )
+  ) {
+    return { error: "Passeador incompatível com região, horário ou porte do pet" };
+  }
+  const price = estimatePrice({ basePrice: Number(walker.base_price), durationMin: walk.duration_min, size: pet.size });
 
   const { error } = await sb
     .from("walk_requests")
