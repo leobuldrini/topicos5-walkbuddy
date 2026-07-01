@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { NotificationBell } from "@/components/NotificationBell";
 import { hasRole } from "@/lib/profile";
 
-type NavProfile = { display_name: string; roles: string[] } | null;
+type NavProfile = { display_name: string; roles: string[]; is_admin?: boolean } | null;
 
-export function Nav({ profile }: { profile: NavProfile }) {
+export function Nav({ profile, unread = 0 }: { profile: NavProfile; unread?: number }) {
   return (
     <nav
       aria-label="Navegação principal"
@@ -14,13 +15,35 @@ export function Nav({ profile }: { profile: NavProfile }) {
           Walk Buddy
         </Link>
         {hasRole(profile, "tutor") && (
-          <Link href="/pets" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
-            Meus Pets
-          </Link>
+          <>
+            <Link href="/pets" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+              Meus Pets
+            </Link>
+            <Link href="/walkers" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+              Passeadores
+            </Link>
+            <Link href="/walks" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+              Passeios
+            </Link>
+          </>
         )}
         {hasRole(profile, "walker") && (
-          <Link href="/walker" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
-            Meu Perfil
+          <>
+            <Link href="/walker" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+              Meu Perfil
+            </Link>
+            <Link href="/walker/requests" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+              Solicitações
+            </Link>
+            <Link href="/walker/earnings" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+              Ganhos
+            </Link>
+          </>
+        )}
+        <NotificationBell unread={unread} />
+        {profile?.is_admin && (
+          <Link href="/admin" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
+            Admin
           </Link>
         )}
       </div>
