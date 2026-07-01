@@ -15,7 +15,15 @@ export async function signUp(formData: FormData) {
   const { data, error } = await sb.auth.signUp({ email: parsed.data.email, password: parsed.data.password });
   if (error || !data.user) return { error: "Não foi possível criar a conta" };
   const admin = createAdminClient();
-  await admin.from("profiles").insert({ id: data.user.id, display_name: parsed.data.displayName, roles: parsed.data.roles });
+  const { error: profileError } = await admin.from("profiles").insert({ id: data.user.id, display_name: parsed.data.displayName, roles: parsed.data.roles });
+  if (profileError) {
+    try {
+      await admin.auth.admin.deleteUser(data.user.id);
+    } catch {
+      // best-effort cleanup; ignore failure
+    }
+    return { error: "Não foi possível concluir o cadastro" };
+  }
   await logAction({ actorId: data.user.id, action: "auth.signup", entity: "profiles", entityId: data.user.id });
   redirect("/dashboard");
 }
