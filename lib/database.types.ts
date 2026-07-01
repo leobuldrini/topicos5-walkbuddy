@@ -104,6 +104,41 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          status: Database["public"]["Enums"]["payment_status"]
+          walk_request_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          method?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          walk_request_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          walk_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_walk_request_id_fkey"
+            columns: ["walk_request_id"]
+            isOneToOne: true
+            referencedRelation: "walk_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pets: {
         Row: {
           age: number | null
@@ -156,21 +191,210 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          is_admin: boolean
           roles: string[]
         }
         Insert: {
           created_at?: string
           display_name: string
           id: string
+          is_admin?: boolean
           roles: string[]
         }
         Update: {
           created_at?: string
           display_name?: string
           id?: string
+          is_admin?: boolean
           roles?: string[]
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          read: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          read?: boolean
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          read?: boolean
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recommendation_logs: {
+        Row: {
+          chosen: boolean
+          created_at: string
+          factors: Json
+          id: string
+          rank: number
+          score: number
+          shown_at: string
+          walk_request_id: string
+          walker_id: string
+        }
+        Insert: {
+          chosen?: boolean
+          created_at?: string
+          factors?: Json
+          id?: string
+          rank: number
+          score: number
+          shown_at?: string
+          walk_request_id: string
+          walker_id: string
+        }
+        Update: {
+          chosen?: boolean
+          created_at?: string
+          factors?: Json
+          id?: string
+          rank?: number
+          score?: number
+          shown_at?: string
+          walk_request_id?: string
+          walker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_logs_walk_request_id_fkey"
+            columns: ["walk_request_id"]
+            isOneToOne: false
+            referencedRelation: "walk_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_logs_walker_id_fkey"
+            columns: ["walker_id"]
+            isOneToOne: false
+            referencedRelation: "walker_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          status: Database["public"]["Enums"]["report_status"]
+          walk_request_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          status?: Database["public"]["Enums"]["report_status"]
+          walk_request_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          reported_user_id?: string
+          reporter_id?: string
+          status?: Database["public"]["Enums"]["report_status"]
+          walk_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_walk_request_id_fkey"
+            columns: ["walk_request_id"]
+            isOneToOne: false
+            referencedRelation: "walk_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          author_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          target_id: string
+          target_type: Database["public"]["Enums"]["review_target"]
+          walk_request_id: string
+        }
+        Insert: {
+          author_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          target_id: string
+          target_type: Database["public"]["Enums"]["review_target"]
+          walk_request_id: string
+        }
+        Update: {
+          author_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["review_target"]
+          walk_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_walk_request_id_fkey"
+            columns: ["walk_request_id"]
+            isOneToOne: false
+            referencedRelation: "walk_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       walker_profiles: {
         Row: {
@@ -222,15 +446,109 @@ export type Database = {
           },
         ]
       }
+      walk_requests: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_by: string | null
+          created_at: string
+          duration_min: number
+          id: string
+          location_text: string | null
+          pet_id: string
+          price_estimate: number
+          region: string
+          scheduled_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["walk_status"]
+          tutor_id: string
+          updated_at: string
+          walker_id: string | null
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          duration_min: number
+          id?: string
+          location_text?: string | null
+          pet_id: string
+          price_estimate?: number
+          region: string
+          scheduled_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["walk_status"]
+          tutor_id: string
+          updated_at?: string
+          walker_id?: string | null
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          duration_min?: number
+          id?: string
+          location_text?: string | null
+          pet_id?: string
+          price_estimate?: number
+          region?: string
+          scheduled_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["walk_status"]
+          tutor_id?: string
+          updated_at?: string
+          walker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "walk_requests_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "walk_requests_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "walk_requests_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "walk_requests_walker_id_fkey"
+            columns: ["walker_id"]
+            isOneToOne: false
+            referencedRelation: "walker_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      walker_ratings: {
+        Row: {
+          avg_rating: number | null
+          review_count: number | null
+          walker_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
+      payment_status: "pendente" | "pago"
       pet_size: "PEQUENO" | "MEDIO" | "GRANDE"
+      report_status: "aberta" | "em_analise" | "resolvida"
+      review_target: "walker" | "tutor" | "pet"
+      walk_status: "solicitado" | "aceito" | "em_andamento" | "concluido" | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -361,7 +679,11 @@ export const Constants = {
   },
   public: {
     Enums: {
+      payment_status: ["pendente", "pago"],
       pet_size: ["PEQUENO", "MEDIO", "GRANDE"],
+      report_status: ["aberta", "em_analise", "resolvida"],
+      review_target: ["walker", "tutor", "pet"],
+      walk_status: ["solicitado", "aceito", "em_andamento", "concluido", "cancelado"],
     },
   },
 } as const

@@ -2,43 +2,64 @@
 
 ## Overview
 
-Walk Buddy is a self-hosted, web-based MVP that connects pet tutors ("tutores")
-to dog walkers ("passeadores"), with an explainable weighted-ranking recommender
-as its differentiator. Built with Next.js (App Router) and Supabase (Postgres,
-Auth, Storage), all self-hosted via Docker — no third-party SaaS dependencies.
-User-facing copy is in pt-BR.
-
-> Full setup/run/test instructions will be completed in Task 10, once the
-> Supabase stack and Docker Compose files exist.
+Walk Buddy is a self-hosted web MVP that connects pet tutors to dog walkers, with
+an explainable weighted-ranking recommender as its differentiator. It uses
+Next.js App Router and Supabase for Postgres, Auth, and Storage. User-facing copy
+is in pt-BR.
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/) (+ Docker Compose)
-- [Node.js](https://nodejs.org/) 20+ and npm
-- [Supabase CLI](https://supabase.com/docs/guides/cli)
+- Docker and Docker Compose
+- Node.js 20+ and npm
+- Supabase CLI
 
 ## Setup
 
-_TODO (Task 10): document `npm install`, Supabase CLI bootstrap, and `.env.local`
-setup from `.env.example`._
+```bash
+npm install
+npx supabase start
+```
+
+Copy the local Supabase URL, anon key, and service role key into `.env.local`
+using `.env.example` as the template. Then apply migrations:
+
+```bash
+npx supabase db reset
+```
 
 ## Run
 
-_TODO (Task 10): document `npm run dev` (Next.js dev server on `:3000`) and how
-to start the local Supabase stack._
+```bash
+npm run dev
+```
+
+Next.js serves the app at `http://localhost:3000`. Supabase runs locally through
+the CLI stack.
 
 ## Test
 
-- `npm run typecheck` — TypeScript type checking (`tsc --noEmit`)
-- `npm run test` — unit tests (Vitest)
-- `npm run e2e` — end-to-end tests (Playwright)
+- `npm run test`: unit tests with Vitest
+- `npm run typecheck`: TypeScript checking
+- `npm run build`: production build
+- `npm run lint`: ESLint
+- `npm run e2e`: Playwright e2e tests
 
-## Env vars
+## Admin Bootstrap
+
+Promote the first admin after signup through Supabase Studio or SQL:
+
+```sql
+update profiles set is_admin = true where id = '<uuid>';
+```
+
+Admin routes are server-gated by `profiles.is_admin`.
+
+## Env Vars
 
 See `.env.example`:
 
 | Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (local: `http://127.0.0.1:54321`) |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL, local default `http://127.0.0.1:54321` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public API key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only, never expose to the client) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key, server-side only |

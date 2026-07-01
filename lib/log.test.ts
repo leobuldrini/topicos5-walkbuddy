@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { buildLogRow } from "@/lib/log";
 
 test("buildLogRow maps input to a valid row", () => {
