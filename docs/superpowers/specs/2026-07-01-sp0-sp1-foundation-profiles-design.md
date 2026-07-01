@@ -78,8 +78,8 @@ edge). **No Prisma** — avoids a second migration system competing with Supabas
 All tables in `public`, all with RLS enabled. Timestamps `created_at`/`updated_at`.
 
 - **profiles** — `id` (PK, FK → `auth.users.id`), `display_name` text, `roles`
-  text[] or enum-set constrained to {`tutor`,`walker`} (both = both present),
-  `created_at`.
+  text[] with a CHECK constraint that every element is in {`tutor`,`walker`} and the
+  array is non-empty (holding both = "both"), `created_at`.
 - **pets** — `id` uuid PK, `tutor_id` FK → profiles, `name`, `size` enum
   {`PEQUENO`,`MEDIO`,`GRANDE`}, `breed`, `age` int, `behavior` text, `notes` text.
 - **walker_profiles** — `id` PK/FK → profiles (1:1), `bio`, `experience_years` int,
