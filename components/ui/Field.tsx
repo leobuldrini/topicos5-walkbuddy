@@ -6,6 +6,7 @@ type FieldProps = {
   required?: boolean;
   autoComplete?: string;
   minLength?: number;
+  step?: string;
   defaultValue?: string;
   error?: string;
 };
@@ -18,6 +19,7 @@ export function Field({
   required,
   autoComplete,
   minLength,
+  step,
   defaultValue,
   error,
 }: FieldProps) {
@@ -34,6 +36,7 @@ export function Field({
         required={required}
         autoComplete={autoComplete}
         minLength={minLength}
+        step={step}
         defaultValue={defaultValue}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
