@@ -76,8 +76,8 @@ export default async function WalkDetailPage({ params }: { params: Promise<{ id:
                 const walker = walkerById.get(recommendation.walkerId);
                 async function chooseRecommended() {
                   "use server";
-                  await chooseWalker(walkId, recommendation.walkerId);
-                  await markChosen(walkId, recommendation.walkerId);
+                  const result = await chooseWalker(walkId, recommendation.walkerId);
+                  if (result?.ok) await markChosen(walkId, recommendation.walkerId);
                 }
                 return (
                   <li key={recommendation.walkerId} className="flex flex-wrap items-start justify-between gap-3 rounded-md border border-zinc-200 p-3">

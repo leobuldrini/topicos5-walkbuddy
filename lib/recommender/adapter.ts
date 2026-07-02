@@ -1,8 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import type { Json, TablesInsert } from "@/lib/database.types";
+import { rerankWithLlm } from "@/lib/recommender/llm";
 import { rankWalkers } from "@/lib/recommender/rank";
-import type { Candidate, PetSize, RankedWalker } from "@/lib/recommender/types";
+import type { Candidate, PetSize, RankedWalker, RankInput } from "@/lib/recommender/types";
 
 export async function loadCandidates(region: string): Promise<Candidate[]> {
   const sb = await createServerClient();
@@ -44,7 +45,8 @@ export async function recommendForRequest(requestId: string): Promise<RankedWalk
   if (!pet) return [];
 
   const weekday = new Date(`${request.scheduled_date}T00:00:00`).getDay();
-  const ranked = rankWalkers({
+  const candidates = await loadCandidates(request.region);
+  const input: RankInput = {
     requestId,
     region: request.region,
     weekday,
@@ -52,8 +54,9 @@ export async function recommendForRequest(requestId: string): Promise<RankedWalk
     petSize: pet.size as PetSize,
     petBehavior: pet.behavior ?? "",
     expectedPrice: Number(request.price_estimate ?? 0),
-    candidates: await loadCandidates(request.region),
-  });
+    candidates,
+  };
+  const ranked = await rerankWithLlm(input, rankWalkers(input));
 
   const admin = createAdminClient();
   await admin.from("recommendation_logs").delete().eq("walk_request_id", requestId);
