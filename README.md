@@ -63,3 +63,7 @@ See `.env.example`:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL, local default `http://127.0.0.1:54321` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public API key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key, server-side only |
+| `OPENROUTER_API_KEY` | Server-side OpenRouter key used by the LLM recommender |
+| `OPENROUTER_MODEL` | OpenRouter model, default `cohere/north-mini-code:free` |
+| `OPENROUTER_BASE_URL` | OpenRouter API base URL, default `https://openrouter.ai/api/v1` |
+| `OPENROUTER_TIMEOUT_MS` | LLM request timeout before falling back to local ranking, default `8000` |
